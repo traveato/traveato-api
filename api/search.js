@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,9 +8,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({
-      error: 'Method not allowed'
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -23,137 +20,133 @@ export default async function handler(req, res) {
       });
     }
 
-    // Budget tier descriptions
-    const tierDesc = {
-      cheap:
-        'budget backpacker, hostels, cheap hotels, street food, low budget travel',
-
-      luxury:
-        '4-5 star hotels, premium dining, luxury transport, comfortable trip',
-
-      ultra:
-        'ultra luxury resorts, private villas, premium suites, butler service, no budget limit'
+    const tierInfo = {
+      cheap: `
+Budget traveller.
+Hostels, cheap hotels, local transport, street food.
+Budget range: 15000-30000 INR.
+`,
+      luxury: `
+Luxury traveller.
+4-5 star hotels, premium dining, private transport.
+Budget range: 50000-150000 INR.
+`,
+      ultra: `
+Ultra luxury traveller.
+Luxury resorts, suites, business class flights, fine dining.
+Budget range: 200000+ INR.
+`
     };
 
-    // Gemini Prompt
     const prompt = `
-You are an expert AI travel planner.
+You are an expert luxury travel planner.
 
-Destination: "${city}"
+Generate ONLY valid JSON.
+No markdown.
+No explanations.
+No backticks.
+
+Destination city: ${city}
 Travellers: ${headCount}
-Budget Tier: ${tier} (${tierDesc[tier] || tierDesc.cheap})
+Budget tier: ${tier}
 
-Return ONLY VALID JSON.
-Do not use markdown.
-Do not use backticks.
-Do not explain anything.
+Tier details:
+${tierInfo[tier] || tierInfo.cheap}
 
-JSON FORMAT:
+Return this EXACT JSON structure:
 
 {
   "destination": "City, Country",
-  "popularity_score": 90,
+  "popularity_score": 88,
   "popularity_label": "Very Popular",
-
-  "travelers_monthly": "2 lakh",
-
+  "travelers_monthly": "2.5 lakh",
   "best_season": "October to March",
+  "trip_duration": "5-7 days",
 
-  "trip_duration": "4-6 days",
+  "per_head_min_inr": 25000,
+  "per_head_max_inr": 60000,
 
-  "per_head_min_inr": 15000,
-
-  "per_head_max_inr": 35000,
-
-  "summary": "Write a detailed but short travel summary.",
-
-  "crowd_insight": "One line about crowd and tourism.",
-
-  "tips": "One useful travel tip.",
-
-  "food_budget": "1500 INR per day",
-
-  "local_transport": "Metro, taxi and local buses available.",
+  "summary": "Detailed destination summary.",
+  "crowd_insight": "Tourist crowd insight.",
+  "tips": "Professional travel tip.",
 
   "hotels": [
     {
       "name": "Hotel Name",
       "stars": 5,
-      "price_per_night": "12000 INR",
-      "highlight": "Luxury beachfront resort"
-    },
-    {
-      "name": "Hotel Name",
-      "stars": 4,
-      "price_per_night": "7000 INR",
-      "highlight": "Near city center"
-    },
-    {
-      "name": "Hotel Name",
-      "stars": 3,
-      "price_per_night": "3500 INR",
-      "highlight": "Budget friendly stay"
+      "price_per_night": "₹15,000-₹25,000",
+      "highlight": "Luxury beach resort"
     }
   ],
 
-  "recommended_flights": [
+  "flights": [
     {
+      "route": "Delhi → Dubai",
       "airline": "Emirates",
-      "route": "Delhi → Destination",
-      "price": "28000 INR",
-      "duration": "4h 20m"
+      "price": "₹28,000",
+      "type": "Round trip economy"
     },
     {
+      "route": "Delhi → Dubai",
       "airline": "Air India",
-      "route": "Mumbai → Destination",
-      "price": "24000 INR",
-      "duration": "5h 10m"
+      "price": "₹22,000",
+      "type": "Direct flight"
     }
   ],
 
-  "top_places": [
-    "Place 1",
-    "Place 2",
-    "Place 3"
+  "places_to_visit": [
+    "Burj Khalifa",
+    "Palm Jumeirah",
+    "Dubai Marina"
+  ],
+
+  "foods_to_try": [
+    "Shawarma",
+    "Kunafa",
+    "Arabic BBQ"
   ],
 
   "itinerary": [
     {
       "day": "Day 1",
-      "plan": "Activities for day 1"
+      "plan": "Arrival and local sightseeing"
     },
     {
       "day": "Day 2",
-      "plan": "Activities for day 2"
-    },
-    {
-      "day": "Day 3",
-      "plan": "Activities for day 3"
+      "plan": "Main attractions and activities"
     }
   ],
 
   "sources_used": [
     "TripAdvisor",
     "Booking.com",
-    "MakeMyTrip",
+    "Google Travel",
     "Lonely Planet"
   ]
 }
+
+IMPORTANT:
+- Return REALISTIC data
+- Never return undefined
+- Always fill every field
+- Hotels must be real
+- Flights must be realistic
+- JSON only
 `;
 
-    // Gemini API Call
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
-
         headers: {
           'Content-Type': 'application/json'
         },
-
         body: JSON.stringify({
-          tools: [{ google_search: {} }],
-
+          tools: [
+            {
+              google_search: {}
+            }
+          ],
           contents: [
             {
               parts: [
@@ -162,90 +155,47 @@ JSON FORMAT:
                 }
               ]
             }
-          ]
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.8,
+            topK: 40,
+            maxOutputTokens: 4096
+          }
         })
       }
     );
 
     const data = await response.json();
 
-    // Extract Gemini text
     const text =
       data?.candidates?.[0]?.content?.parts
-        ?.filter(part => part.text)
-        ?.map(part => part.text)
-        ?.join('') || '{}';
+        ?.map(p => p.text || '')
+        ?.join('') || '';
 
-    // Clean markdown
     const clean = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
 
-    // Extract JSON only
-    const match = clean.match(/\{[\s\S]*\}/);
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
 
-    let result = {};
-
-    try {
-      result = JSON.parse(match ? match[0] : clean);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-
-      // Fallback
-      result = {
-        destination: city,
-
-        popularity_score: 75,
-
-        popularity_label: 'Popular',
-
-        travelers_monthly: 'Data unavailable',
-
-        best_season: 'Best season unavailable',
-
-        trip_duration: '3-5 days',
-
-        per_head_min_inr: 15000,
-
-        per_head_max_inr: 30000,
-
-        summary:
-          'Unable to fetch complete AI travel data right now. Please try again.',
-
-        crowd_insight:
-          'Tourist activity information currently unavailable.',
-
-        tips:
-          'Try searching again after some time.',
-
-        food_budget:
-          '1500 INR per day',
-
-        local_transport:
-          'Taxi and local transport available.',
-
-        hotels: [],
-
-        recommended_flights: [],
-
-        top_places: [],
-
-        itinerary: [],
-
-        sources_used: ['Gemini AI']
-      };
+    if (!jsonMatch) {
+      return res.status(500).json({
+        error: 'Invalid AI response',
+        raw: clean
+      });
     }
 
+    const parsed = JSON.parse(jsonMatch[0]);
+
     return res.status(200).json({
-      result
+      result: parsed
     });
 
-  } catch (err) {
-    console.error(err);
-
+  } catch (error) {
     return res.status(500).json({
-      error: err.message || 'Internal Server Error'
+      error: error.message
     });
   }
 }
