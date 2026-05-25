@@ -19,132 +19,82 @@ export default async function handler(req, res) {
     const { city, headCount, tier } = req.body;
 
     const prompt = `
-You are a professional AI travel research engine.
+Return ONLY pure valid JSON.
 
-IMPORTANT RULES:
-- Use REAL hotel names only.
-- Use REAL destinations only.
-- Never generate fake hotel names.
-- Never use placeholders.
-- Never repeat same hotels.
-- Hotels must exist in real life.
-- Return ONLY valid JSON.
-- No markdown.
-- No explanations.
-- No backticks.
+NO markdown.
+NO explanation.
+NO backticks.
+NO extra text.
 
 Destination: ${city}
 Travellers: ${headCount}
-Budget tier: ${tier}
+Budget: ${tier}
 
-Tier guide:
+Generate REAL travel data.
 
-cheap:
-- budget hotels
-- backpacker stays
-- affordable food
-
-luxury:
-- premium 4-5 star hotels
-- fine dining
-- premium travel
-
-ultra:
-- ultra luxury resorts
-- premium suites
-- iconic luxury stays
-
-Return JSON format:
+JSON format:
 
 {
-  "destination":"City, Country",
-
-  "popularity_score":88,
-  "popularity_label":"Very Popular",
-
-  "travelers_monthly":"2 lakh",
-
+  "destination":"Haridwar, India",
+  "popularity_score":85,
+  "popularity_label":"Popular",
+  "travelers_monthly":"1 lakh+",
   "best_season":"October to March",
+  "trip_duration":"3-5 days",
 
-  "trip_duration":"4-6 days",
+  "per_head_min_inr":15000,
+  "per_head_max_inr":40000,
 
-  "per_head_min_inr":25000,
-  "per_head_max_inr":70000,
+  "summary":"Destination summary",
 
-  "summary":"Write a realistic destination summary.",
+  "crowd_insight":"Crowd insight",
 
-  "crowd_insight":"Write realistic crowd insight.",
-
-  "tips":"Professional travel tip.",
+  "tips":"Travel tip",
 
   "hotels":[
     {
-      "name":"Real Hotel Name",
-      "stars":5,
-      "price_per_night":"₹15,000-₹25,000",
-      "highlight":"Real hotel feature"
-    },
-    {
-      "name":"Another Real Hotel",
+      "name":"Hotel Ganga Lahari",
       "stars":4,
-      "price_per_night":"₹8,000-₹12,000",
-      "highlight":"Real hotel feature"
+      "price_per_night":"₹7,000",
+      "highlight":"Ganga river view"
     },
     {
-      "name":"Third Real Hotel",
-      "stars":3,
-      "price_per_night":"₹3,000-₹6,000",
-      "highlight":"Real hotel feature"
+      "name":"Amatra By The Ganges",
+      "stars":5,
+      "price_per_night":"₹15,000",
+      "highlight":"Luxury riverside resort"
     }
   ],
 
   "flights":[
     {
-      "route":"Delhi to destination",
+      "route":"Delhi to Dehradun",
       "airline":"IndiGo",
-      "price":"₹8,000",
-      "type":"Economy"
-    },
-    {
-      "route":"Mumbai to destination",
-      "airline":"Air India",
-      "price":"₹11,000",
+      "price":"₹4,500",
       "type":"Direct"
     }
-  ],
-
-  "places_to_visit":[
-    "Place 1",
-    "Place 2",
-    "Place 3"
-  ],
-
-  "foods_to_try":[
-    "Food 1",
-    "Food 2"
   ],
 
   "itinerary":[
     {
       "day":"Day 1",
-      "plan":"Detailed realistic itinerary"
+      "plan":"Arrival and Ganga Aarti"
     },
     {
       "day":"Day 2",
-      "plan":"Detailed realistic itinerary"
+      "plan":"Temple visits and local food"
     }
   ],
 
   "sources_used":[
     "TripAdvisor",
-    "Booking.com",
     "Google Travel"
   ]
 }
 `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
 
@@ -154,11 +104,12 @@ Return JSON format:
 
         body: JSON.stringify({
 
-          tools: [
-            {
-              google_search: {}
-            }
-          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 32,
+            topP: 1,
+            maxOutputTokens: 4096
+          },
 
           contents: [
             {
@@ -175,35 +126,35 @@ Return JSON format:
 
     const data = await response.json();
 
-    let text =
-      data?.candidates?.[0]?.content?.parts
-        ?.filter(p => p.text)
-        ?.map(p => p.text)
-        ?.join('') || '';
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    text = text
+    const cleaned = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
 
-    const firstBrace = text.indexOf('{');
-    const lastBrace = text.lastIndexOf('}');
+    let parsed;
 
-    if (firstBrace === -1 || lastBrace === -1) {
-      throw new Error('No valid JSON returned');
+    try {
+
+      parsed = JSON.parse(cleaned);
+
+    } catch (jsonError) {
+
+      console.log(cleaned);
+
+      return res.status(500).json({
+        error: 'No valid JSON returned',
+        raw: cleaned
+      });
     }
-
-    const jsonString = text.slice(firstBrace, lastBrace + 1);
-
-    const parsed = JSON.parse(jsonString);
 
     return res.status(200).json({
       result: parsed
     });
 
   } catch (err) {
-
-    console.error(err);
 
     return res.status(500).json({
       error: err.message
