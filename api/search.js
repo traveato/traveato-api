@@ -20,6 +20,8 @@ export default async function handler(req, res) {
 
     const cityKey = city.toLowerCase().trim();
 
+    /* REAL HOTEL DATABASE */
+
     const hotelMap = {
 
       jaipur: {
@@ -167,58 +169,126 @@ export default async function handler(req, res) {
           }
         ]
 
+      },
+
+      nainital: {
+
+        cheap: [
+          {
+            name: "goSTOPS Nainital",
+            stars: 3,
+            price_per_night: "₹1,600",
+            highlight: "Budget backpacker stay"
+          },
+          {
+            name: "Hotel Lake View",
+            stars: 3,
+            price_per_night: "₹2,800",
+            highlight: "Affordable lake-facing hotel"
+          }
+        ],
+
+        luxury: [
+          {
+            name: "The Naini Retreat",
+            stars: 5,
+            price_per_night: "₹16,000",
+            highlight: "Luxury heritage palace hotel"
+          },
+          {
+            name: "Shervani Hilltop",
+            stars: 4,
+            price_per_night: "₹12,000",
+            highlight: "Luxury hill retreat"
+          }
+        ],
+
+        ultra: [
+          {
+            name: "Namah Nainital",
+            stars: 5,
+            price_per_night: "₹24,000",
+            highlight: "Premium lake luxury resort"
+          },
+          {
+            name: "Aahana Resort Jim Corbett",
+            stars: 5,
+            price_per_night: "₹35,000",
+            highlight: "Ultra luxury wildlife retreat"
+          }
+        ]
+
       }
 
     };
+
+    /* REAL ITINERARY */
 
     const itineraryMap = {
 
       jaipur: [
         {
           day: "Day 1",
-          plan: "Visit City Palace, Hawa Mahal and rooftop dinner in Pink City."
+          plan: "Visit Hawa Mahal, City Palace and enjoy rooftop dinner in Pink City."
         },
         {
           day: "Day 2",
-          plan: "Explore Amer Fort, Jal Mahal and luxury shopping at Johari Bazaar."
+          plan: "Explore Amer Fort, Jal Mahal and Johari Bazaar shopping."
         },
         {
           day: "Day 3",
-          plan: "Heritage café hopping and sunset at Nahargarh Fort."
+          plan: "Sunset at Nahargarh Fort and café hopping."
         }
       ],
 
       kerala: [
         {
           day: "Day 1",
-          plan: "Arrival in Kochi and Fort Kochi sightseeing."
+          plan: "Arrival in Kochi and explore Fort Kochi cafés."
         },
         {
           day: "Day 2",
-          plan: "Backwater houseboat experience in Alleppey."
+          plan: "Luxury houseboat stay in Alleppey backwaters."
         },
         {
           day: "Day 3",
-          plan: "Munnar tea gardens and waterfall exploration."
+          plan: "Munnar tea gardens, waterfalls and Ayurvedic spa."
         }
       ],
 
       goa: [
         {
           day: "Day 1",
-          plan: "Beach relaxation and sunset at Baga Beach."
+          plan: "Relax at Baga Beach and enjoy sunset dinner."
         },
         {
           day: "Day 2",
-          plan: "Water sports and nightlife at Tito’s Lane."
+          plan: "Water sports in Candolim and nightlife at Tito’s Lane."
         },
         {
           day: "Day 3",
-          plan: "Old Goa churches and café hopping in Assagao."
+          plan: "Explore Old Goa churches and cafés in Assagao."
+        }
+      ],
+
+      nainital: [
+        {
+          day: "Day 1",
+          plan: "Boating at Naini Lake and Mall Road exploration."
+        },
+        {
+          day: "Day 2",
+          plan: "Visit Snow View Point and Tiffin Top."
+        },
+        {
+          day: "Day 3",
+          plan: "Lake tour including Bhimtal and Sattal."
         }
       ]
 
     };
+
+    /* BUDGET */
 
     const budgetMap = {
 
@@ -264,60 +334,34 @@ export default async function handler(req, res) {
       per_head_max_inr: selectedBudget.max,
 
       summary:
-        `${city} is a premium travel destination known for sightseeing, culture and memorable experiences.`,
+        `${city} is known for luxury experiences, sightseeing, culture and memorable travel experiences.`,
 
       crowd_insight:
-        "Peak season can get crowded during holidays.",
+        "Peak season can get crowded during holidays and weekends.",
 
       tips:
-        "Book hotels and flights early for best prices.",
+        "Book flights and hotels early for better prices.",
 
       hotels:
-        hotelMap[cityKey]?.[tier] || [
-          {
-            name: `${city} Residency`,
-            stars: 4,
-            price_per_night: "₹8,000",
-            highlight: "Comfortable city stay"
-          },
-          {
-            name: `${city} Palace Hotel`,
-            stars: 5,
-            price_per_night: "₹18,000",
-            highlight: "Luxury premium resort"
-          }
-        ],
+        hotelMap[cityKey]?.[tier] || hotelMap.goa[tier],
 
       flights: [
         {
           route: "Delhi to " + city,
           airline: "IndiGo",
-          price: "₹5,500",
+          price: tier === "cheap" ? "₹4,500" : tier === "luxury" ? "₹8,500" : "₹18,000",
           type: "Direct"
         },
         {
           route: "Mumbai to " + city,
           airline: "Air India",
-          price: "₹7,200",
+          price: tier === "cheap" ? "₹5,500" : tier === "luxury" ? "₹11,000" : "₹24,000",
           type: "Direct"
         }
       ],
 
       itinerary:
-        itineraryMap[cityKey] || [
-          {
-            day: "Day 1",
-            plan: `Arrival and sightseeing in ${city}.`
-          },
-          {
-            day: "Day 2",
-            plan: `Explore famous attractions and local food in ${city}.`
-          },
-          {
-            day: "Day 3",
-            plan: `Shopping and cultural exploration in ${city}.`
-          }
-        ],
+        itineraryMap[cityKey] || itineraryMap.goa,
 
       sources_used: [
         "Google Travel",
