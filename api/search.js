@@ -35,46 +35,58 @@ Generate REAL travel information.
 JSON FORMAT:
 
 {
-  "destination":"Haridwar, India",
+  "destination":"Goa, India",
 
-  "popularity_score":85,
-  "popularity_label":"Popular",
+  "popularity_score":92,
+  "popularity_label":"Very Popular",
 
-  "travelers_monthly":"1 lakh+",
+  "travelers_monthly":"4 lakh+",
 
-  "best_season":"October to March",
+  "best_season":"November to February",
 
   "trip_duration":"4-6 days",
 
-  "per_head_min_inr":15000,
-  "per_head_max_inr":40000,
+  "per_head_min_inr":18000,
+  "per_head_max_inr":65000,
 
-  "summary":"Short realistic summary.",
+  "summary":"Goa is India's top beach destination known for nightlife, beaches, cafes and luxury resorts.",
 
-  "crowd_insight":"Crowd insight.",
+  "crowd_insight":"Peak season gets crowded during Christmas and New Year.",
 
-  "tips":"Helpful travel tip.",
+  "tips":"Book hotels early during peak season.",
 
   "hotels":[
     {
-      "name":"Hotel Ganga Lahari",
-      "stars":4,
-      "price_per_night":"₹7,000",
-      "highlight":"River view stay"
+      "name":"Taj Fort Aguada Resort & Spa",
+      "stars":5,
+      "price_per_night":"₹18,000",
+      "highlight":"Luxury sea-facing resort"
     },
     {
-      "name":"Amatra By The Ganges",
+      "name":"W Goa",
       "stars":5,
-      "price_per_night":"₹15,000",
-      "highlight":"Luxury riverside resort"
+      "price_per_night":"₹22,000",
+      "highlight":"Luxury beach property"
+    },
+    {
+      "name":"Fairfield by Marriott Goa",
+      "stars":4,
+      "price_per_night":"₹8,000",
+      "highlight":"Affordable premium stay"
     }
   ],
 
   "flights":[
     {
-      "route":"Delhi to Dehradun",
+      "route":"Delhi to Goa",
       "airline":"IndiGo",
-      "price":"₹4,500",
+      "price":"₹6,500",
+      "type":"Direct"
+    },
+    {
+      "route":"Mumbai to Goa",
+      "airline":"Air India",
+      "price":"₹4,000",
       "type":"Direct"
     }
   ],
@@ -82,11 +94,15 @@ JSON FORMAT:
   "itinerary":[
     {
       "day":"Day 1",
-      "plan":"Arrival and sightseeing"
+      "plan":"Arrival and North Goa beaches"
     },
     {
       "day":"Day 2",
-      "plan":"Explore temples and local food"
+      "plan":"Water sports and nightlife"
+    },
+    {
+      "day":"Day 3",
+      "plan":"South Goa sightseeing"
     }
   ],
 
@@ -109,19 +125,6 @@ JSON FORMAT:
 
         body: JSON.stringify({
 
-          generationConfig: {
-            temperature: 0.8,
-            topK: 40,
-            topP: 1,
-            maxOutputTokens: 4096
-          },
-
-          tools: [
-            {
-              google_search: {}
-            }
-          ],
-
           contents: [
             {
               parts: [
@@ -130,27 +133,37 @@ JSON FORMAT:
                 }
               ]
             }
-          ]
+          ],
+
+          generationConfig: {
+            temperature: 0.8,
+            topP: 1,
+            topK: 40,
+            maxOutputTokens: 4096
+          }
         })
       }
     );
 
     const data = await response.json();
 
+    console.log("FULL GEMINI RESPONSE:");
     console.log(JSON.stringify(data, null, 2));
 
     const parts =
       data?.candidates?.[0]?.content?.parts || [];
 
     const text = parts
-      .filter(part => part.text)
-      .map(part => part.text)
+      .map(part => part.text || '')
       .join('');
 
     const cleaned = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
+
+    console.log("CLEANED RESPONSE:");
+    console.log(cleaned);
 
     const match = cleaned.match(/\{[\s\S]*\}/);
 
@@ -165,9 +178,7 @@ JSON FORMAT:
 
     const parsed = JSON.parse(match[0]);
 
-    return res.status(200).json({
-      result: parsed
-    });
+    return res.status(200).json(parsed);
 
   } catch (err) {
 
