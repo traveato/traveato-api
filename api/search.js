@@ -18,26 +18,76 @@ export default async function handler(req, res) {
 
     const { city, headCount, tier } = req.body;
 
-    const cityKey = city.toLowerCase().trim();
+    const cityKey = city
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z]/g, '');
 
-    /* REAL HOTEL DATABASE */
+    // HOTEL DATABASE
 
     const hotelMap = {
+
+      goa: {
+        cheap: [
+          {
+            name: "Zostel Goa",
+            stars: 3,
+            price_per_night: "₹2,500",
+            highlight: "Backpacker hostel near beach"
+          },
+          {
+            name: "BloomSuites Goa",
+            stars: 4,
+            price_per_night: "₹5,500",
+            highlight: "Affordable modern stay"
+          }
+        ],
+
+        luxury: [
+          {
+            name: "Taj Resort Goa",
+            stars: 5,
+            price_per_night: "₹18,000",
+            highlight: "Luxury sea-facing resort"
+          },
+          {
+            name: "Grand Hyatt Goa",
+            stars: 5,
+            price_per_night: "₹22,000",
+            highlight: "Premium luxury experience"
+          }
+        ],
+
+        ultra: [
+          {
+            name: "W Goa",
+            stars: 5,
+            price_per_night: "₹45,000",
+            highlight: "Ultra luxury beach resort"
+          },
+          {
+            name: "St Regis Goa",
+            stars: 5,
+            price_per_night: "₹60,000",
+            highlight: "Private luxury villas"
+          }
+        ]
+      },
 
       jaipur: {
 
         cheap: [
           {
-            name: "Zostel Jaipur",
+            name: "Moustache Jaipur",
             stars: 3,
-            price_per_night: "₹1,200",
-            highlight: "Backpacker hostel near Pink City"
+            price_per_night: "₹2,000",
+            highlight: "Budget backpacker hostel"
           },
           {
-            name: "Hotel Pearl Palace",
+            name: "Laxmi Palace Heritage",
             stars: 3,
-            price_per_night: "₹2,500",
-            highlight: "Budget heritage hotel"
+            price_per_night: "₹4,500",
+            highlight: "Affordable heritage stay"
           }
         ],
 
@@ -49,44 +99,43 @@ export default async function handler(req, res) {
             highlight: "Luxury heritage resort"
           },
           {
-            name: "ITC Rajputana",
+            name: "Rambagh Palace",
             stars: 5,
-            price_per_night: "₹18,000",
-            highlight: "Premium royal experience"
+            price_per_night: "₹55,000",
+            highlight: "Royal palace luxury stay"
           }
         ],
 
         ultra: [
           {
-            name: "Rambagh Palace",
+            name: "Rajmahal Palace RAAS",
             stars: 5,
-            price_per_night: "₹55,000",
-            highlight: "Royal palace luxury stay"
+            price_per_night: "₹75,000",
+            highlight: "Ultra luxury palace suite"
           },
           {
             name: "The Oberoi Rajvilas",
             stars: 5,
-            price_per_night: "₹70,000",
-            highlight: "Ultra luxury villa resort"
+            price_per_night: "₹95,000",
+            highlight: "Private villa luxury"
           }
         ]
-
       },
 
       kerala: {
 
         cheap: [
           {
-            name: "The Lost Hostel Kochi",
+            name: "goSTOPS Kochi",
             stars: 3,
-            price_per_night: "₹1,500",
-            highlight: "Budget hostel near Fort Kochi"
+            price_per_night: "₹2,200",
+            highlight: "Budget stay in Kochi"
           },
           {
-            name: "Munnar Inn",
+            name: "Treebo Trend Palmyra",
             stars: 3,
-            price_per_night: "₹2,800",
-            highlight: "Affordable tea valley stay"
+            price_per_night: "₹4,000",
+            highlight: "Affordable comfort stay"
           }
         ],
 
@@ -94,97 +143,47 @@ export default async function handler(req, res) {
           {
             name: "Kumarakom Lake Resort",
             stars: 5,
-            price_per_night: "₹28,000",
+            price_per_night: "₹22,000",
             highlight: "Luxury backwater resort"
           },
           {
-            name: "Le Meridien Kochi",
+            name: "The Leela Kovalam",
             stars: 5,
-            price_per_night: "₹16,000",
-            highlight: "Premium waterfront hotel"
+            price_per_night: "₹28,000",
+            highlight: "Clifftop sea-view luxury"
           }
         ],
 
         ultra: [
           {
-            name: "The Leela Kovalam",
+            name: "CGH Earth Brunton Boatyard",
             stars: 5,
-            price_per_night: "₹35,000",
-            highlight: "Cliffside sea-view luxury"
+            price_per_night: "₹48,000",
+            highlight: "Exclusive heritage luxury"
           },
           {
             name: "Niraamaya Retreats",
             stars: 5,
-            price_per_night: "₹48,000",
-            highlight: "Private Ayurvedic luxury retreat"
+            price_per_night: "₹65,000",
+            highlight: "Private ayurveda retreat"
           }
         ]
-
-      },
-
-      goa: {
-
-        cheap: [
-          {
-            name: "Pappi Chulo Hostel",
-            stars: 3,
-            price_per_night: "₹1,400",
-            highlight: "Budget party hostel"
-          },
-          {
-            name: "Whoopers Hostel Goa",
-            stars: 3,
-            price_per_night: "₹2,000",
-            highlight: "Affordable beach stay"
-          }
-        ],
-
-        luxury: [
-          {
-            name: "Taj Exotica Goa",
-            stars: 5,
-            price_per_night: "₹24,000",
-            highlight: "Luxury sea-facing resort"
-          },
-          {
-            name: "Grand Hyatt Goa",
-            stars: 5,
-            price_per_night: "₹18,000",
-            highlight: "Premium bay resort"
-          }
-        ],
-
-        ultra: [
-          {
-            name: "W Goa",
-            stars: 5,
-            price_per_night: "₹35,000",
-            highlight: "Ultra luxury beach resort"
-          },
-          {
-            name: "The St Regis Goa",
-            stars: 5,
-            price_per_night: "₹42,000",
-            highlight: "Private luxury golf resort"
-          }
-        ]
-
       },
 
       nainital: {
 
         cheap: [
           {
-            name: "goSTOPS Nainital",
+            name: "Zostel Nainital",
             stars: 3,
-            price_per_night: "₹1,600",
-            highlight: "Budget backpacker stay"
+            price_per_night: "₹1,800",
+            highlight: "Lake-view backpacker hostel"
           },
           {
-            name: "Hotel Lake View",
+            name: "Hotel Himalaya",
             stars: 3,
-            price_per_night: "₹2,800",
-            highlight: "Affordable lake-facing hotel"
+            price_per_night: "₹3,500",
+            highlight: "Affordable mountain stay"
           }
         ],
 
@@ -193,127 +192,114 @@ export default async function handler(req, res) {
             name: "The Naini Retreat",
             stars: 5,
             price_per_night: "₹16,000",
-            highlight: "Luxury heritage palace hotel"
+            highlight: "Heritage luxury resort"
           },
           {
             name: "Shervani Hilltop",
             stars: 4,
-            price_per_night: "₹12,000",
-            highlight: "Luxury hill retreat"
+            price_per_night: "₹11,000",
+            highlight: "Premium forest-view stay"
           }
         ],
 
         ultra: [
           {
-            name: "Namah Nainital",
+            name: "Aahana Resort Corbett",
             stars: 5,
-            price_per_night: "₹24,000",
-            highlight: "Premium lake luxury resort"
+            price_per_night: "₹38,000",
+            highlight: "Ultra luxury jungle retreat"
           },
           {
-            name: "Aahana Resort Jim Corbett",
+            name: "Taj Corbett Resort",
             stars: 5,
-            price_per_night: "₹35,000",
-            highlight: "Ultra luxury wildlife retreat"
+            price_per_night: "₹55,000",
+            highlight: "Luxury riverside experience"
           }
         ]
-
       }
 
     };
 
-    /* REAL ITINERARY */
+    // ITINERARY DATABASE
 
     const itineraryMap = {
+
+      goa: [
+        {
+          day: "Day 1",
+          plan: "Arrival in North Goa and beach exploration."
+        },
+        {
+          day: "Day 2",
+          plan: "Water sports and nightlife at Baga."
+        },
+        {
+          day: "Day 3",
+          plan: "Old Goa churches and sunset cruise."
+        }
+      ],
 
       jaipur: [
         {
           day: "Day 1",
-          plan: "Visit Hawa Mahal, City Palace and enjoy rooftop dinner in Pink City."
+          plan: "Visit City Palace, Hawa Mahal and rooftop dinner in Pink City."
         },
         {
           day: "Day 2",
-          plan: "Explore Amer Fort, Jal Mahal and Johari Bazaar shopping."
+          plan: "Explore Amer Fort, Jal Mahal and shopping at Johari Bazaar."
         },
         {
           day: "Day 3",
-          plan: "Sunset at Nahargarh Fort and café hopping."
+          plan: "Heritage café hopping and sunset at Nahargarh Fort."
         }
       ],
 
       kerala: [
         {
           day: "Day 1",
-          plan: "Arrival in Kochi and explore Fort Kochi cafés."
+          plan: "Arrival in Kochi and sightseeing."
         },
         {
           day: "Day 2",
-          plan: "Luxury houseboat stay in Alleppey backwaters."
+          plan: "Backwater houseboat experience."
         },
         {
           day: "Day 3",
-          plan: "Munnar tea gardens, waterfalls and Ayurvedic spa."
-        }
-      ],
-
-      goa: [
-        {
-          day: "Day 1",
-          plan: "Relax at Baga Beach and enjoy sunset dinner."
-        },
-        {
-          day: "Day 2",
-          plan: "Water sports in Candolim and nightlife at Tito’s Lane."
-        },
-        {
-          day: "Day 3",
-          plan: "Explore Old Goa churches and cafés in Assagao."
+          plan: "Munnar tea gardens and relaxation."
         }
       ],
 
       nainital: [
         {
           day: "Day 1",
-          plan: "Boating at Naini Lake and Mall Road exploration."
+          plan: "Arrival and Naini Lake boating."
         },
         {
           day: "Day 2",
-          plan: "Visit Snow View Point and Tiffin Top."
+          plan: "Snow View Point and Mall Road exploration."
         },
         {
           day: "Day 3",
-          plan: "Lake tour including Bhimtal and Sattal."
+          plan: "Bhimtal and local café hopping."
         }
       ]
 
     };
 
-    /* BUDGET */
+    // PRICE LOGIC
 
-    const budgetMap = {
+    let minPrice = 15000;
+    let maxPrice = 40000;
 
-      cheap: {
-        min: 15000,
-        max: 40000,
-        label: "Cheap"
-      },
+    if (tier === "luxury") {
+      minPrice = 50000;
+      maxPrice = 150000;
+    }
 
-      luxury: {
-        min: 50000,
-        max: 150000,
-        label: "Luxury"
-      },
-
-      ultra: {
-        min: 120000,
-        max: 300000,
-        label: "Ultra Luxury"
-      }
-
-    };
-
-    const selectedBudget =
-      budgetMap[tier] || budgetMap.cheap;
+    if (tier === "ultra") {
+      minPrice = 120000;
+      maxPrice = 300000;
+    }
 
     const result = {
 
@@ -321,47 +307,74 @@ export default async function handler(req, res) {
 
       popularity_score: 85,
 
-      popularity_label: "Popular",
+      popularity_label:
+        tier === "ultra"
+          ? "Elite Destination"
+          : tier === "luxury"
+          ? "Very Popular"
+          : "Popular",
 
-      travelers_monthly: "1 lakh+",
+      travelers_monthly:
+        tier === "ultra"
+          ? "50k+ monthly"
+          : "1 lakh+ monthly",
 
       best_season: "October to March",
 
-      trip_duration: "4-6 days",
+      trip_duration:
+        cityKey === "goa"
+          ? "3-5 days"
+          : cityKey === "kerala"
+          ? "4-6 days"
+          : "2-4 days",
 
-      per_head_min_inr: selectedBudget.min,
+      per_head_min_inr: minPrice,
 
-      per_head_max_inr: selectedBudget.max,
+      per_head_max_inr: maxPrice,
 
       summary:
-        `${city} is known for luxury experiences, sightseeing, culture and memorable travel experiences.`,
+        `${city} is a premium travel destination known for sightseeing, culture and memorable experiences.`,
 
       crowd_insight:
-        "Peak season can get crowded during holidays and weekends.",
+        "Peak season can get crowded during holidays.",
 
       tips:
-        "Book flights and hotels early for better prices.",
+        "Book hotels and flights early for best prices.",
 
       hotels:
-        hotelMap[cityKey]?.[tier] || hotelMap.goa[tier],
-
-      flights: [
-        {
-          route: "Delhi to " + city,
-          airline: "IndiGo",
-          price: tier === "cheap" ? "₹4,500" : tier === "luxury" ? "₹8,500" : "₹18,000",
-          type: "Direct"
-        },
-        {
-          route: "Mumbai to " + city,
-          airline: "Air India",
-          price: tier === "cheap" ? "₹5,500" : tier === "luxury" ? "₹11,000" : "₹24,000",
-          type: "Direct"
-        }
-      ],
+        hotelMap[cityKey]?.[tier] ||
+        hotelMap[cityKey]?.luxury ||
+        [
+          {
+            name: `${city} Residency`,
+            stars: 4,
+            price_per_night: "₹8,000",
+            highlight: "Comfortable city stay"
+          },
+          {
+            name: `${city} Palace Hotel`,
+            stars: 5,
+            price_per_night: "₹18,000",
+            highlight: "Luxury premium resort"
+          }
+        ],
 
       itinerary:
-        itineraryMap[cityKey] || itineraryMap.goa,
+        itineraryMap[cityKey] ||
+        [
+          {
+            day: "Day 1",
+            plan: `Arrival and sightseeing in ${city}.`
+          },
+          {
+            day: "Day 2",
+            plan: `Explore famous attractions and local food in ${city}.`
+          },
+          {
+            day: "Day 3",
+            plan: `Shopping and cultural exploration in ${city}.`
+          }
+        ],
 
       sources_used: [
         "Google Travel",
@@ -382,5 +395,4 @@ export default async function handler(req, res) {
     });
 
   }
-
 }
