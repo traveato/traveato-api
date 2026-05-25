@@ -8,130 +8,61 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({
+      error: 'Method not allowed'
+    });
   }
 
   try {
     const { city, headCount, tier } = req.body;
 
-    if (!city) {
-      return res.status(400).json({
-        error: 'City is required'
-      });
-    }
-
-    const tierInfo = {
-      cheap: `
-Budget traveller.
-Hostels, cheap hotels, local transport, street food.
-Budget range: 15000-30000 INR.
-`,
-      luxury: `
-Luxury traveller.
-4-5 star hotels, premium dining, private transport.
-Budget range: 50000-150000 INR.
-`,
-      ultra: `
-Ultra luxury traveller.
-Luxury resorts, suites, business class flights, fine dining.
-Budget range: 200000+ INR.
-`
-    };
-
     const prompt = `
-You are an expert luxury travel planner.
+Return ONLY valid JSON.
 
-Generate ONLY valid JSON.
-No markdown.
-No explanations.
-No backticks.
-
-Destination city: ${city}
+Destination: ${city}
 Travellers: ${headCount}
 Budget tier: ${tier}
 
-Tier details:
-${tierInfo[tier] || tierInfo.cheap}
-
-Return this EXACT JSON structure:
+JSON format:
 
 {
-  "destination": "City, Country",
-  "popularity_score": 88,
-  "popularity_label": "Very Popular",
-  "travelers_monthly": "2.5 lakh",
-  "best_season": "October to March",
-  "trip_duration": "5-7 days",
+  "destination":"Dubai, UAE",
+  "popularity_score":90,
+  "popularity_label":"Very Popular",
+  "travelers_monthly":"3 lakh",
+  "best_season":"Nov-Mar",
+  "trip_duration":"5 days",
 
-  "per_head_min_inr": 25000,
-  "per_head_max_inr": 60000,
+  "per_head_min_inr":50000,
+  "per_head_max_inr":120000,
 
-  "summary": "Detailed destination summary.",
-  "crowd_insight": "Tourist crowd insight.",
-  "tips": "Professional travel tip.",
+  "summary":"Short destination summary.",
 
-  "hotels": [
+  "crowd_insight":"Crowd insight",
+
+  "tips":"Travel tip",
+
+  "hotels":[
     {
-      "name": "Hotel Name",
-      "stars": 5,
-      "price_per_night": "₹15,000-₹25,000",
-      "highlight": "Luxury beach resort"
+      "name":"Atlantis The Palm",
+      "stars":5,
+      "price_per_night":"₹25,000",
+      "highlight":"Luxury beach resort"
     }
   ],
 
-  "flights": [
+  "itinerary":[
     {
-      "route": "Delhi → Dubai",
-      "airline": "Emirates",
-      "price": "₹28,000",
-      "type": "Round trip economy"
-    },
-    {
-      "route": "Delhi → Dubai",
-      "airline": "Air India",
-      "price": "₹22,000",
-      "type": "Direct flight"
+      "day":"Day 1",
+      "plan":"Arrival and sightseeing"
     }
   ],
 
-  "places_to_visit": [
-    "Burj Khalifa",
-    "Palm Jumeirah",
-    "Dubai Marina"
-  ],
-
-  "foods_to_try": [
-    "Shawarma",
-    "Kunafa",
-    "Arabic BBQ"
-  ],
-
-  "itinerary": [
-    {
-      "day": "Day 1",
-      "plan": "Arrival and local sightseeing"
-    },
-    {
-      "day": "Day 2",
-      "plan": "Main attractions and activities"
-    }
-  ],
-
-  "sources_used": [
+  "sources_used":[
     "TripAdvisor",
-    "Booking.com",
-    "Google Travel",
-    "Lonely Planet"
+    "Google Travel"
   ]
 }
-
-IMPORTANT:
-- Return REALISTIC data
-- Never return undefined
-- Always fill every field
-- Hotels must be real
-- Flights must be realistic
-- JSON only
 `;
 
     const response = await fetch(
@@ -142,11 +73,6 @@ IMPORTANT:
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          tools: [
-            {
-              google_search: {}
-            }
-          ],
           contents: [
             {
               parts: [
@@ -155,135 +81,111 @@ IMPORTANT:
                 }
               ]
             }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.8,
-            topK: 40,
-            maxOutputTokens: 4096
-          }
+          ]
         })
       }
     );
 
     const data = await response.json();
 
-    const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map(p => p.text || '')
-        ?.join('') || '';
+    let text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    const clean = text
+    text = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
 
-    const jsonMatch = clean.match(/\{[\s\S]*\}/);
-
-    if (!jsonMatch) {
-      return res.status(500).json({
-        error: 'Invalid AI response',
-        raw: clean
-      });
-    }
-
     let parsed;
 
-try {
-  parsed = JSON.parse(jsonMatch[0]);
-} catch (e) {
+    try {
 
-  const fallback = {
-    destination: city,
-    popularity_score: 85,
-    popularity_label: "Popular",
-    travelers_monthly: "1 lakh+",
-    best_season: "October to March",
-    trip_duration: "4-6 days",
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
 
-    per_head_min_inr: tier === "ultra"
-      ? 120000
-      : tier === "luxury"
-      ? 45000
-      : 15000,
-
-    per_head_max_inr: tier === "ultra"
-      ? 300000
-      : tier === "luxury"
-      ? 120000
-      : 40000,
-
-    summary: `${city} is one of the most popular travel destinations with great attractions, food, culture and experiences for travellers.`,
-
-    crowd_insight:
-      "Peak season gets crowded. Advance booking recommended.",
-
-    tips:
-      "Book hotels and flights early for better pricing.",
-
-    hotels: [
-      {
-        name: `${city} Grand Hotel`,
-        stars: 5,
-        price_per_night: "₹15,000-₹25,000",
-        highlight: "Luxury stay with premium amenities"
-      },
-      {
-        name: `${city} Residency`,
-        stars: 4,
-        price_per_night: "₹8,000-₹15,000",
-        highlight: "Popular premium hotel"
+      if (firstBrace === -1 || lastBrace === -1) {
+        throw new Error('No JSON found');
       }
-    ],
 
-    flights: [
-      {
-        route: `Delhi → ${city}`,
-        airline: "IndiGo",
-        price: "₹12,000",
-        type: "Economy"
-      }
-    ],
+      const jsonString = text.slice(firstBrace, lastBrace + 1);
 
-    places_to_visit: [
-      "City Center",
-      "Local Market",
-      "Top Tourist Attraction"
-    ],
+      parsed = JSON.parse(jsonString);
 
-    foods_to_try: [
-      "Local Cuisine",
-      "Street Food",
-      "Traditional Dish"
-    ],
+    } catch (e) {
 
-    itinerary: [
-      {
-        day: "Day 1",
-        plan: "Arrival and sightseeing"
-      },
-      {
-        day: "Day 2",
-        plan: "Main attractions and food tour"
-      }
-    ],
+      parsed = {
+        destination: city,
+        popularity_score: 85,
+        popularity_label: "Popular",
+        travelers_monthly: "1 lakh+",
+        best_season: "October to March",
+        trip_duration: "4-6 days",
 
-    sources_used: [
-      "Google Travel",
-      "TripAdvisor"
-    ]
-  };
+        per_head_min_inr:
+          tier === "ultra"
+            ? 120000
+            : tier === "luxury"
+            ? 50000
+            : 15000,
 
-  parsed = fallback;
-}
+        per_head_max_inr:
+          tier === "ultra"
+            ? 300000
+            : tier === "luxury"
+            ? 150000
+            : 40000,
+
+        summary:
+          `${city} is a beautiful destination known for tourism, food, attractions and memorable travel experiences.`,
+
+        crowd_insight:
+          "Peak season can be crowded. Advance booking recommended.",
+
+        tips:
+          "Book hotels early for better prices.",
+
+        hotels: [
+          {
+            name: `${city} Luxury Stay`,
+            stars: 5,
+            price_per_night: "₹15,000",
+            highlight: "Premium luxury experience"
+          },
+          {
+            name: `${city} Grand Hotel`,
+            stars: 4,
+            price_per_night: "₹8,000",
+            highlight: "Comfortable premium hotel"
+          }
+        ],
+
+        itinerary: [
+          {
+            day: "Day 1",
+            plan: "Arrival and local sightseeing"
+          },
+          {
+            day: "Day 2",
+            plan: "Explore attractions and local food"
+          }
+        ],
+
+        sources_used: [
+          "Google Travel",
+          "TripAdvisor"
+        ]
+      };
+    }
 
     return res.status(200).json({
       result: parsed
     });
 
-  } catch (error) {
+  } catch (err) {
+
     return res.status(500).json({
-      error: error.message
+      error: err.message
     });
+
   }
 }
