@@ -11,7 +11,7 @@ async function searchDestination() {
   try {
 
     const response = await fetch(
-      'https://YOUR-VERCEL-URL.vercel.app/api/search',
+      'https://traveato-api.vercel.app/api/search',
       {
         method: 'POST',
 
