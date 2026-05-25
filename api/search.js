@@ -18,143 +18,43 @@ export default async function handler(req, res) {
 
     const { city, headCount, tier } = req.body;
 
-    const prompt = `
-Return ONLY valid JSON.
+    const cityKey = city.toLowerCase().trim();
 
-Generate REAL travel data for ${city}.
+    const hotelMap = {
 
-Requirements:
-- Real hotels
-- Real attractions
-- Real itinerary
-- Real flight routes
-- Luxury recommendations
-- No markdown
-- No explanation
+      jaipur: {
 
-JSON format:
-
-{
-  "destination":"${city}, India",
-
-  "popularity_score":88,
-
-  "popularity_label":"Very Popular",
-
-  "travelers_monthly":"2 lakh+",
-
-  "best_season":"October to March",
-
-  "trip_duration":"4-6 days",
-
-  "per_head_min_inr":50000,
-
-  "per_head_max_inr":150000,
-
-  "summary":"Destination summary",
-
-  "crowd_insight":"Crowd insight",
-
-  "tips":"Travel tip",
-
-  "hotels":[
-    {
-      "name":"Real hotel",
-      "stars":5,
-      "price_per_night":"₹20,000",
-      "highlight":"Luxury feature"
-    },
-    {
-      "name":"Real hotel",
-      "stars":4,
-      "price_per_night":"₹12,000",
-      "highlight":"Premium stay"
-    }
-  ],
-
-  "flights":[
-    {
-      "route":"Delhi to ${city}",
-      "airline":"IndiGo",
-      "price":"₹7,500",
-      "type":"Direct"
-    }
-  ],
-
-  "itinerary":[
-    {
-      "day":"Day 1",
-      "plan":"Detailed itinerary"
-    },
-    {
-      "day":"Day 2",
-      "plan":"Detailed itinerary"
-    }
-  ],
-
-  "sources_used":[
-    "Google Travel",
-    "TripAdvisor",
-    "Booking.com"
-  ]
-}
-`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-
-        headers: {
-          'Content-Type': 'application/json'
-        },
-
-        body: JSON.stringify({
-
-          generationConfig: {
-            temperature: 1,
-            topP: 1,
-            topK: 32,
-            maxOutputTokens: 4096,
-            responseMimeType: "application/json"
+        cheap: [
+          {
+            name: "Zostel Jaipur",
+            stars: 3,
+            price_per_night: "₹1,200",
+            highlight: "Backpacker hostel near Pink City"
           },
+          {
+            name: "Hotel Pearl Palace",
+            stars: 3,
+            price_per_night: "₹2,500",
+            highlight: "Budget heritage hotel"
+          }
+        ],
 
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
+        luxury: [
+          {
+            name: "Fairmont Jaipur",
+            stars: 5,
+            price_per_night: "₹22,000",
+            highlight: "Luxury heritage resort"
+          },
+          {
+            name: "ITC Rajputana",
+            stars: 5,
+            price_per_night: "₹18,000",
+            highlight: "Premium royal experience"
+          }
+        ],
 
-    const data = await response.json();
-
-    let raw =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    raw = raw
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    let parsed;
-
-    try {
-
-      parsed = JSON.parse(raw);
-
-    } catch (e) {
-
-      // SMART FALLBACK DATA
-
-      const hotelMap = {
-
-        jaipur: [
+        ultra: [
           {
             name: "Rambagh Palace",
             stars: 5,
@@ -162,14 +62,33 @@ JSON format:
             highlight: "Royal palace luxury stay"
           },
           {
-            name: "Fairmont Jaipur",
+            name: "The Oberoi Rajvilas",
             stars: 5,
-            price_per_night: "₹22,000",
-            highlight: "Luxury heritage resort"
+            price_per_night: "₹70,000",
+            highlight: "Ultra luxury villa resort"
+          }
+        ]
+
+      },
+
+      kerala: {
+
+        cheap: [
+          {
+            name: "The Lost Hostel Kochi",
+            stars: 3,
+            price_per_night: "₹1,500",
+            highlight: "Budget hostel near Fort Kochi"
+          },
+          {
+            name: "Munnar Inn",
+            stars: 3,
+            price_per_night: "₹2,800",
+            highlight: "Affordable tea valley stay"
           }
         ],
 
-        kerala: [
+        luxury: [
           {
             name: "Kumarakom Lake Resort",
             stars: 5,
@@ -177,171 +96,239 @@ JSON format:
             highlight: "Luxury backwater resort"
           },
           {
+            name: "Le Meridien Kochi",
+            stars: 5,
+            price_per_night: "₹16,000",
+            highlight: "Premium waterfront hotel"
+          }
+        ],
+
+        ultra: [
+          {
             name: "The Leela Kovalam",
             stars: 5,
             price_per_night: "₹35,000",
-            highlight: "Cliffside sea-view resort"
+            highlight: "Cliffside sea-view luxury"
+          },
+          {
+            name: "Niraamaya Retreats",
+            stars: 5,
+            price_per_night: "₹48,000",
+            highlight: "Private Ayurvedic luxury retreat"
+          }
+        ]
+
+      },
+
+      goa: {
+
+        cheap: [
+          {
+            name: "Pappi Chulo Hostel",
+            stars: 3,
+            price_per_night: "₹1,400",
+            highlight: "Budget party hostel"
+          },
+          {
+            name: "Whoopers Hostel Goa",
+            stars: 3,
+            price_per_night: "₹2,000",
+            highlight: "Affordable beach stay"
           }
         ],
 
-        goa: [
-          {
-            name: "W Goa",
-            stars: 5,
-            price_per_night: "₹32,000",
-            highlight: "Luxury beach resort"
-          },
+        luxury: [
           {
             name: "Taj Exotica Goa",
             stars: 5,
-            price_per_night: "₹26,000",
-            highlight: "Sea-facing luxury stay"
-          }
-        ],
-
-        dubai: [
+            price_per_night: "₹24,000",
+            highlight: "Luxury sea-facing resort"
+          },
           {
-            name: "Atlantis The Palm",
+            name: "Grand Hyatt Goa",
             stars: 5,
-            price_per_night: "₹48,000",
-            highlight: "Iconic Dubai luxury resort"
-          },
-          {
-            name: "Burj Al Arab",
-            stars: 7,
-            price_per_night: "₹1,20,000",
-            highlight: "Ultra luxury hotel"
-          }
-        ]
-
-      };
-
-      const itineraryMap = {
-
-        jaipur: [
-          {
-            day: "Day 1",
-            plan: "Visit City Palace, Hawa Mahal and rooftop dinner in Pink City."
-          },
-          {
-            day: "Day 2",
-            plan: "Explore Amer Fort, Jal Mahal and luxury shopping at Johari Bazaar."
-          },
-          {
-            day: "Day 3",
-            plan: "Heritage café hopping and sunset at Nahargarh Fort."
+            price_per_night: "₹18,000",
+            highlight: "Premium bay resort"
           }
         ],
 
-        kerala: [
+        ultra: [
           {
-            day: "Day 1",
-            plan: "Explore Fort Kochi and sunset at Marine Drive."
+            name: "W Goa",
+            stars: 5,
+            price_per_night: "₹35,000",
+            highlight: "Ultra luxury beach resort"
           },
           {
-            day: "Day 2",
-            plan: "Munnar tea gardens and luxury nature retreat."
-          },
-          {
-            day: "Day 3",
-            plan: "Alleppey private houseboat backwater experience."
-          }
-        ],
-
-        goa: [
-          {
-            day: "Day 1",
-            plan: "Baga Beach nightlife and sunset cafés."
-          },
-          {
-            day: "Day 2",
-            plan: "Water sports and beach club experiences."
-          },
-          {
-            day: "Day 3",
-            plan: "Old Goa churches and luxury yacht sunset."
+            name: "The St Regis Goa",
+            stars: 5,
+            price_per_night: "₹42,000",
+            highlight: "Private luxury golf resort"
           }
         ]
 
-      };
+      }
 
-      const cityKey = city.toLowerCase();
+    };
 
-      parsed = {
+    const itineraryMap = {
 
-        destination: `${city}, India`,
+      jaipur: [
+        {
+          day: "Day 1",
+          plan: "Visit City Palace, Hawa Mahal and rooftop dinner in Pink City."
+        },
+        {
+          day: "Day 2",
+          plan: "Explore Amer Fort, Jal Mahal and luxury shopping at Johari Bazaar."
+        },
+        {
+          day: "Day 3",
+          plan: "Heritage café hopping and sunset at Nahargarh Fort."
+        }
+      ],
 
-        popularity_score: 85,
+      kerala: [
+        {
+          day: "Day 1",
+          plan: "Arrival in Kochi and Fort Kochi sightseeing."
+        },
+        {
+          day: "Day 2",
+          plan: "Backwater houseboat experience in Alleppey."
+        },
+        {
+          day: "Day 3",
+          plan: "Munnar tea gardens and waterfall exploration."
+        }
+      ],
 
-        popularity_label: "Popular",
+      goa: [
+        {
+          day: "Day 1",
+          plan: "Beach relaxation and sunset at Baga Beach."
+        },
+        {
+          day: "Day 2",
+          plan: "Water sports and nightlife at Tito’s Lane."
+        },
+        {
+          day: "Day 3",
+          plan: "Old Goa churches and café hopping in Assagao."
+        }
+      ]
 
-        travelers_monthly: "1 lakh+",
+    };
 
-        best_season: "October to March",
+    const budgetMap = {
 
-        trip_duration: "4-6 days",
+      cheap: {
+        min: 15000,
+        max: 40000,
+        label: "Cheap"
+      },
 
-        per_head_min_inr: 120000,
+      luxury: {
+        min: 50000,
+        max: 150000,
+        label: "Luxury"
+      },
 
-        per_head_max_inr: 300000,
+      ultra: {
+        min: 120000,
+        max: 300000,
+        label: "Ultra Luxury"
+      }
 
-        summary:
-          `${city} is a premium travel destination known for luxury experiences, sightseeing and culture.`,
+    };
 
-        crowd_insight:
-          "Peak season can get crowded during holidays.",
+    const selectedBudget =
+      budgetMap[tier] || budgetMap.cheap;
 
-        tips:
-          "Book luxury hotels early for best rates.",
+    const result = {
 
-        hotels:
-          hotelMap[cityKey] || [
-            {
-              name: `${city} Luxury Resort`,
-              stars: 5,
-              price_per_night: "₹20,000",
-              highlight: "Luxury stay"
-            }
-          ],
+      destination: `${city}, India`,
 
-        flights: [
+      popularity_score: 85,
+
+      popularity_label: "Popular",
+
+      travelers_monthly: "1 lakh+",
+
+      best_season: "October to March",
+
+      trip_duration: "4-6 days",
+
+      per_head_min_inr: selectedBudget.min,
+
+      per_head_max_inr: selectedBudget.max,
+
+      summary:
+        `${city} is a premium travel destination known for sightseeing, culture and memorable experiences.`,
+
+      crowd_insight:
+        "Peak season can get crowded during holidays.",
+
+      tips:
+        "Book hotels and flights early for best prices.",
+
+      hotels:
+        hotelMap[cityKey]?.[tier] || [
           {
-            route: `Delhi to ${city}`,
-            airline: "IndiGo",
-            price: "₹8,000",
-            type: "Direct"
+            name: `${city} Residency`,
+            stars: 4,
+            price_per_night: "₹8,000",
+            highlight: "Comfortable city stay"
           },
           {
-            route: `Mumbai to ${city}`,
-            airline: "Air India",
-            price: "₹7,000",
-            type: "Direct"
+            name: `${city} Palace Hotel`,
+            stars: 5,
+            price_per_night: "₹18,000",
+            highlight: "Luxury premium resort"
           }
         ],
 
-        itinerary:
-          itineraryMap[cityKey] || [
-            {
-              day: "Day 1",
-              plan: `Arrival and sightseeing in ${city}.`
-            },
-            {
-              day: "Day 2",
-              plan: `Explore famous attractions and local food in ${city}.`
-            }
-          ],
+      flights: [
+        {
+          route: "Delhi to " + city,
+          airline: "IndiGo",
+          price: "₹5,500",
+          type: "Direct"
+        },
+        {
+          route: "Mumbai to " + city,
+          airline: "Air India",
+          price: "₹7,200",
+          type: "Direct"
+        }
+      ],
 
-        sources_used: [
-          "Google Travel",
-          "TripAdvisor",
-          "Booking.com"
-        ]
-      };
+      itinerary:
+        itineraryMap[cityKey] || [
+          {
+            day: "Day 1",
+            plan: `Arrival and sightseeing in ${city}.`
+          },
+          {
+            day: "Day 2",
+            plan: `Explore famous attractions and local food in ${city}.`
+          },
+          {
+            day: "Day 3",
+            plan: `Shopping and cultural exploration in ${city}.`
+          }
+        ],
 
-    }
+      sources_used: [
+        "Google Travel",
+        "TripAdvisor",
+        "Booking.com"
+      ]
+
+    };
 
     return res.status(200).json({
-      result: parsed
+      result
     });
 
   } catch (err) {
