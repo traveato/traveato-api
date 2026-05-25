@@ -19,44 +19,48 @@ export default async function handler(req, res) {
     const { city, headCount, tier } = req.body;
 
     const prompt = `
-Return ONLY pure valid JSON.
+Return ONLY valid JSON.
 
-NO markdown.
-NO explanation.
-NO backticks.
-NO extra text.
+No markdown.
+No explanation.
+No backticks.
+No extra text.
 
 Destination: ${city}
 Travellers: ${headCount}
-Budget: ${tier}
+Budget tier: ${tier}
 
-Generate REAL travel data.
+Generate REAL travel information.
 
-JSON format:
+JSON FORMAT:
 
 {
   "destination":"Haridwar, India",
+
   "popularity_score":85,
   "popularity_label":"Popular",
+
   "travelers_monthly":"1 lakh+",
+
   "best_season":"October to March",
-  "trip_duration":"3-5 days",
+
+  "trip_duration":"4-6 days",
 
   "per_head_min_inr":15000,
   "per_head_max_inr":40000,
 
-  "summary":"Destination summary",
+  "summary":"Short realistic summary.",
 
-  "crowd_insight":"Crowd insight",
+  "crowd_insight":"Crowd insight.",
 
-  "tips":"Travel tip",
+  "tips":"Helpful travel tip.",
 
   "hotels":[
     {
       "name":"Hotel Ganga Lahari",
       "stars":4,
       "price_per_night":"₹7,000",
-      "highlight":"Ganga river view"
+      "highlight":"River view stay"
     },
     {
       "name":"Amatra By The Ganges",
@@ -78,23 +82,24 @@ JSON format:
   "itinerary":[
     {
       "day":"Day 1",
-      "plan":"Arrival and Ganga Aarti"
+      "plan":"Arrival and sightseeing"
     },
     {
       "day":"Day 2",
-      "plan":"Temple visits and local food"
+      "plan":"Explore temples and local food"
     }
   ],
 
   "sources_used":[
     "TripAdvisor",
-    "Google Travel"
+    "Google Travel",
+    "Booking.com"
   ]
 }
 `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
 
@@ -105,11 +110,17 @@ JSON format:
         body: JSON.stringify({
 
           generationConfig: {
-            temperature: 0.7,
-            topK: 32,
+            temperature: 0.8,
+            topK: 40,
             topP: 1,
             maxOutputTokens: 4096
           },
+
+          tools: [
+            {
+              google_search: {}
+            }
+          ],
 
           contents: [
             {
@@ -126,35 +137,41 @@ JSON format:
 
     const data = await response.json();
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log(JSON.stringify(data, null, 2));
+
+    const parts =
+      data?.candidates?.[0]?.content?.parts || [];
+
+    const text = parts
+      .filter(part => part.text)
+      .map(part => part.text)
+      .join('');
 
     const cleaned = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
 
-    let parsed;
+    const match = cleaned.match(/\{[\s\S]*\}/);
 
-    try {
-
-      parsed = JSON.parse(cleaned);
-
-    } catch (jsonError) {
-
-      console.log(cleaned);
+    if (!match) {
 
       return res.status(500).json({
         error: 'No valid JSON returned',
         raw: cleaned
       });
+
     }
+
+    const parsed = JSON.parse(match[0]);
 
     return res.status(200).json({
       result: parsed
     });
 
   } catch (err) {
+
+    console.error(err);
 
     return res.status(500).json({
       error: err.message
